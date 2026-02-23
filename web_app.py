@@ -61,24 +61,21 @@ def save_data(data: dict) -> None:
         json.dump(data, f, indent=2)
 
 
-def filter_data(data: dict, num_years: int) -> dict:
-    """Return a copy of data trimmed to the last num_years in each section."""
+def filter_data(data: dict, start_year: int, end_year: int) -> dict:
+    """Return a copy of data trimmed to years between start_year and end_year inclusive."""
     import copy
     d = copy.deepcopy(data)
 
-    rev_years = sorted(d["revenue"]["Membership Dues"], key=int)
-    keep_rev = set(rev_years[-num_years:])
+    keep_rev = {y for y in d["revenue"]["Membership Dues"] if start_year <= int(y) <= end_year}
     for metric in d["revenue"]:
         d["revenue"][metric] = {y: v for y, v in d["revenue"][metric].items() if y in keep_rev}
 
-    exp_years = sorted(d["expenses"]["Programming"], key=int)
-    keep_exp = set(exp_years[-num_years:])
+    keep_exp = {y for y in d["expenses"]["Programming"] if start_year <= int(y) <= end_year}
     for metric in ["Programming", "Personnel", "Conference", "Grants to Agencies"]:
         d["expenses"][metric] = {y: v for y, v in d["expenses"][metric].items() if y in keep_exp}
     d["expenses"]["FTE Count"] = {y: v for y, v in d["expenses"]["FTE Count"].items() if y in keep_exp}
 
-    func_years = sorted(d["functional"]["Program"], key=int)
-    keep_func = set(func_years[-num_years:])
+    keep_func = {y for y in d["functional"]["Program"] if start_year <= int(y) <= end_year}
     for metric in ["Program", "Management", "Fundraising", "Total Budget"]:
         d["functional"][metric] = {y: v for y, v in d["functional"][metric].items() if y in keep_func}
 
@@ -276,12 +273,11 @@ cash_value = st.text_input(
 
 st.markdown("---")
 
-num_years = st.slider(
-    "Years to show on dashboard",
-    min_value=2,
-    max_value=6,
-    value=len(existing_years),
-    help="Slide left to show fewer years on the charts (most recent years always included).",
+start_year, end_year = st.slider(
+    "Year range to show on dashboard",
+    min_value=min(existing_years),
+    max_value=max(existing_years),
+    value=(min(existing_years), max(existing_years)),
 )
 
 if st.button("Generate PDF", type="primary", use_container_width=True):
@@ -328,12 +324,10 @@ if st.button("Generate PDF", type="primary", use_container_width=True):
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tf:
             tmp_path = tf.name
 
-        generate_from_data(filter_data(data, num_years), tmp_path)
+        generate_from_data(filter_data(data, start_year, end_year), tmp_path)
         save_data(data)
 
-    all_rev_years = sorted(int(k) for k in data["revenue"]["Membership Dues"])
-    chart_years = sorted(all_rev_years)[-num_years:]
-    filename = f"dashboard_{min(chart_years)}_{max(chart_years)}.pdf"
+    filename = f"dashboard_{start_year}_{end_year}.pdf"
 
     with open(tmp_path, "rb") as f:
         st.download_button(
