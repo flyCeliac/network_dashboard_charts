@@ -276,8 +276,8 @@ st.markdown("---")
 start_year, end_year = st.slider(
     "Year range to show on dashboard",
     min_value=min(existing_years),
-    max_value=max(existing_years),
-    value=(min(existing_years), max(existing_years)),
+    max_value=year,
+    value=(min(existing_years), year),
 )
 
 if st.button("Generate PDF", type="primary", use_container_width=True):
