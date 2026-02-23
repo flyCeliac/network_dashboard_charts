@@ -4,25 +4,59 @@ Financial Dashboard Generator
 Run with:  streamlit run web_app.py
 """
 
+import base64
 import json
 import tempfile
 from pathlib import Path
 
+import requests
 import streamlit as st
 
 from charts import generate_from_data
 
 DATA_FILE = Path("data/dashboard_data.json")
 
+# ── GitHub-backed persistence (used when deployed on Streamlit Cloud) ─────────
+
+def _github_headers():
+    return {"Authorization": f"token {st.secrets['GITHUB_TOKEN']}"}
+
+def _github_url():
+    repo = st.secrets["GITHUB_REPO"]
+    return f"https://api.github.com/repos/{repo}/contents/data/dashboard_data.json"
+
+def _use_github() -> bool:
+    return "GITHUB_TOKEN" in st.secrets
+
 
 # ── Data helpers ──────────────────────────────────────────────────────────────
 
 def load_data() -> dict:
+    if _use_github():
+        r = requests.get(_github_url(), headers=_github_headers())
+        r.raise_for_status()
+        content = base64.b64decode(r.json()["content"]).decode()
+        return json.loads(content)
     with open(DATA_FILE) as f:
         return json.load(f)
 
 
 def save_data(data: dict) -> None:
+    if _use_github():
+        # Fetch current SHA (required by GitHub API to update a file)
+        r = requests.get(_github_url(), headers=_github_headers())
+        r.raise_for_status()
+        sha = r.json()["sha"]
+        payload = {
+            "message": "Update dashboard data",
+            "content": base64.b64encode(
+                json.dumps(data, indent=2).encode()
+            ).decode(),
+            "sha": sha,
+        }
+        r = requests.put(_github_url(), headers=_github_headers(), json=payload)
+        r.raise_for_status()
+        return
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
