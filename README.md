@@ -1,4 +1,4 @@
-# Network Financial Dashboard Generator
+# The Network Financial Dashboard Generator
 
 A web app that lets non-technical staff enter annual financial figures and generate a multi-chart PDF dashboard for board presentations.
 
