@@ -200,8 +200,8 @@ def _fmt_bar_val(val: float, n_bars: int) -> str:
     """Abbreviate dollar amounts when many bars are present to prevent overlap."""
     if n_bars >= 5:
         if val >= 1_000_000:
-            return f"${val / 1_000_000:.1f}M"
-        return f"${val / 1_000:.0f}K"
+            return f"${val / 1_000_000:.2f}M"
+        return f"${val / 1_000:.1f}K"
     return f"${val:,.0f}"
 
 
