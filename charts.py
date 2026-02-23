@@ -196,6 +196,15 @@ def _apply_ylabel(ax, label: str, show_ylabel: bool):
     ax.tick_params(axis="y", labelleft=True)
 
 
+def _fmt_bar_val(val: float, n_bars: int) -> str:
+    """Abbreviate dollar amounts when many bars are present to prevent overlap."""
+    if n_bars >= 5:
+        if val >= 1_000_000:
+            return f"${val / 1_000_000:.1f}M"
+        return f"${val / 1_000:.0f}K"
+    return f"${val:,.0f}"
+
+
 def draw_bar(
     ax,
     title: str,
@@ -207,8 +216,12 @@ def draw_bar(
     show_xlabel: bool,
     show_ylabel: bool,
 ):
-    x = list(range(len(years)))
-    bars = ax.bar(x, values, color=color, width=0.55)
+    n = len(years)
+    bar_width = 0.45 if n >= 5 else 0.55
+    ann_fs = FONT_ANNOT - 1 if n >= 5 else FONT_ANNOT
+
+    x = list(range(n))
+    bars = ax.bar(x, values, color=color, width=bar_width)
 
     ax.set_xticks(x, years)
     ax.set_title(title, fontsize=FONT_TITLE)
@@ -222,13 +235,13 @@ def draw_bar(
     for i, (bar, val) in enumerate(zip(bars, values)):
         if val > 0:
             ax.annotate(
-                f"${val:,.0f}",
+                _fmt_bar_val(val, n),
                 xy=(bar.get_x() + bar.get_width() / 2, val),
                 xytext=(0, 3),
                 textcoords="offset points",
                 ha="center",
                 va="bottom",
-                fontsize=FONT_ANNOT,
+                fontsize=ann_fs,
                 clip_on=False,
             )
 
@@ -241,7 +254,7 @@ def draw_bar(
                 textcoords="offset points",
                 ha="center",
                 va="bottom",
-                fontsize=FONT_ANNOT,
+                fontsize=ann_fs,
                 color="#555555",
                 clip_on=False,
             )
