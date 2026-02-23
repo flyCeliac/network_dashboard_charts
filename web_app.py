@@ -279,7 +279,7 @@ st.markdown("---")
 num_years = st.slider(
     "Years to show on dashboard",
     min_value=2,
-    max_value=min(6, len(existing_years)),
+    max_value=6,
     value=len(existing_years),
     help="Slide left to show fewer years on the charts (most recent years always included).",
 )
