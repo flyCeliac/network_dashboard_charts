@@ -338,4 +338,4 @@ if st.button("Generate PDF", type="primary", use_container_width=True):
             use_container_width=True,
         )
 
-    st.success(f"Dashboard generated for FY {min(all_rev_years)}–{max(all_rev_years)}. Data saved.")
+    st.success(f"Dashboard generated for FY {start_year}–{end_year}. Data saved.")
