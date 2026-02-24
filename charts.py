@@ -605,10 +605,12 @@ def generate_from_data(data: dict, out_path: str) -> None:
     )
 
     ax_func_meta.axis("off")
-    ax_func_meta.legend(
+    ax_func_1.legend(
         wedges, legend_labels,
         loc="upper center",
+        bbox_to_anchor=(0.5, -0.04),
         ncol=3, frameon=False, fontsize=FONT_LABEL,
+        title="Functional Expenses", title_fontsize=FONT_TITLE,
     )
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
@@ -747,10 +749,12 @@ def main():
     )
 
     ax_func_meta.axis("off")
-    ax_func_meta.legend(
+    ax_func_1.legend(
         wedges, legend_labels,
         loc="upper center",
+        bbox_to_anchor=(0.5, -0.04),
         ncol=3, frameon=False, fontsize=FONT_LABEL,
+        title="Functional Expenses", title_fontsize=FONT_TITLE,
     )
 
     # ── Cash card ─────────────────────────────────────────────────────────────
