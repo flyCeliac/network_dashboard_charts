@@ -231,7 +231,7 @@ def draw_bar(
     bars = ax.bar(x, values, color=color, width=bar_width)
 
     ax.set_xticks(x, years)
-    ax.set_title(title, fontsize=FONT_TITLE)
+    ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "Dollars", show_ylabel)
 
@@ -281,7 +281,7 @@ def draw_percent_bar(
     bars = ax.bar(x, values, color=color, width=0.55)
 
     ax.set_xticks(x, years)
-    ax.set_title(title, fontsize=FONT_TITLE)
+    ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "Percent", show_ylabel)
 
@@ -331,7 +331,7 @@ def draw_fte_bar(
     bars = ax.bar(x, values, color=color, width=0.55)
 
     ax.set_xticks(x, years)
-    ax.set_title(title, fontsize=FONT_TITLE)
+    ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "FTE", show_ylabel)
 
@@ -402,7 +402,7 @@ def draw_functional_pie(
                     clip_on=False,
                 )
 
-        ax.set_title(f"FY {year}", fontsize=FONT_TITLE, y=1.30)
+        ax.set_title(f"FY {year}", fontsize=FONT_TITLE, fontweight="bold", y=1.30)
 
     return wedges, ["Program", "Management", "Fundraising"]
 
