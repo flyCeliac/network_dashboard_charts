@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from matplotlib.patches import FancyBboxPatch, Rectangle
 from matplotlib.lines import Line2D
+from matplotlib.gridspec import GridSpecFromSubplotSpec
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 
@@ -348,6 +349,59 @@ def draw_grouped_bar(
     ax.legend(loc="upper left", frameon=False, fontsize=FONT_LABEL)
 
 
+def draw_functional_pie(
+    axes,
+    years: List[int],
+    program_vals: List[float],
+    mgmt_vals: List[float],
+    fund_vals: List[float],
+):
+    inside_colors = ["white", "white", "#1a3c2a"]
+    wedges = []
+    for ax, year, prog, mgmt, fund in zip(axes, years, program_vals, mgmt_vals, fund_vals):
+        total = prog + mgmt + fund
+        sizes = [prog, mgmt, fund]
+
+        wedges, _ = ax.pie(
+            sizes,
+            labels=None,
+            colors=["#2D6A4F", "#52B788", "#95D5B2"],
+            startangle=90,
+            wedgeprops={"linewidth": 0},
+        )
+
+        for i, (wedge, val) in enumerate(zip(wedges, sizes)):
+            angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
+            cx, cy = math.cos(angle), math.sin(angle)
+            pct = val / total if total > 0 else 0
+
+            label = f"{_fmt_bar_val(val)}  {pct * 100:.0f}%" if i == 0 else _fmt_bar_val(val)
+
+            if pct >= 0.10:
+                ax.text(
+                    cx * 0.62 + 0.15, cy * 0.62, label,
+                    ha="center", va="center",
+                    fontsize=FONT_ANNOT, fontweight="bold",
+                    color=inside_colors[i],
+                )
+            else:
+                ha = "left" if cx >= 0 else "right"
+                ax.annotate(
+                    label,
+                    xy=(cx * 1.02, cy * 1.02),
+                    xytext=(cx * 1.45, cy * 1.45),
+                    ha=ha, va="center",
+                    fontsize=FONT_ANNOT - 1,
+                    color="#444444",
+                    arrowprops=dict(arrowstyle="-", color="#aaaaaa", lw=0.8),
+                    clip_on=False,
+                )
+
+        ax.set_title(f"FY {year}", fontsize=FONT_TITLE, fontweight="bold", y=1.30)
+
+    return wedges, ["Program", "Management", "Fundraising"]
+
+
 def draw_cash_card(ax, headline: str, value_text: str):
     ax.axis("off")
     ax.set_xlim(0, 1)
@@ -456,6 +510,17 @@ def generate_from_data(data: dict, out_path: str) -> None:
     fte_years  = sorted(int(y) for y in fte_data)
     fte_values = [float(fte_data.get(str(y), 0) or 0) for y in fte_years]
 
+    # ── Functional ────────────────────────────────────────────────────────────
+    func = data["functional"]
+    func_years = sorted(int(y) for y in func["Program"])
+
+    def _fv(metric: str) -> List[float]:
+        return [float(func[metric].get(str(y), 0) or 0) for y in func_years]
+
+    program_vals = _fv("Program")
+    mgmt_vals    = _fv("Management")
+    fund_vals    = _fv("Fundraising")
+
     # ── Cash card ─────────────────────────────────────────────────────────────
     cash = data.get("cash_card", {})
     cash_headline = cash.get("headline", "Cash on Hand")
@@ -465,18 +530,23 @@ def generate_from_data(data: dict, out_path: str) -> None:
     year_range = f"FY {min(rev_years)}\u2013{max(rev_years)}"
 
     # ── Layout ────────────────────────────────────────────────────────────────
-    fig = plt.figure(figsize=(17.6, 13))
+    fig = plt.figure(figsize=(17.6, 15))
     gs = fig.add_gridspec(
-        nrows=3, ncols=4,
+        nrows=4, ncols=4,
         width_ratios=[1, 1, 1, 1],
-        height_ratios=[1.8, 1.2, 0.3],
+        height_ratios=[1.2, 1.2, 1.8, 0.3],
     )
 
-    ax_cash    = fig.add_subplot(gs[0, 0:2])
-    ax_unres   = fig.add_subplot(gs[0, 2:4])
+    ax_cash    = fig.add_subplot(gs[0, 0])       # 1 column — compact card
+    ax_unres   = fig.add_subplot(gs[0, 1:4])     # 3 columns
     ax_grouped = fig.add_subplot(gs[1, 0:3])
     ax_fte     = fig.add_subplot(gs[1, 3])
-    ax_footer  = fig.add_subplot(gs[2, :])
+
+    n_func = len(func_years)
+    gs_func = GridSpecFromSubplotSpec(1, n_func, subplot_spec=gs[2, :], wspace=0.35)
+    func_axes = [fig.add_subplot(gs_func[0, i]) for i in range(n_func)]
+
+    ax_footer = fig.add_subplot(gs[3, :])
     ax_footer.axis("off")
 
     fig.suptitle(f"Financial Dashboard ({year_range})", fontsize=FONT_SUPT, y=0.995)
@@ -488,6 +558,25 @@ def generate_from_data(data: dict, out_path: str) -> None:
                      rev_years, total_rev_values, total_exp_values)
     draw_fte_bar(ax_fte, "FTE Count", fte_years, fte_values,
                  _FTE, show_xlabel=True, show_ylabel=False)
+
+    wedges, legend_labels = draw_functional_pie(
+        func_axes, func_years, program_vals, mgmt_vals, fund_vals,
+    )
+    mid = len(func_axes) // 2
+    func_axes[mid].text(
+        0.5, 1.58, "Functional Expenses",
+        ha="center", va="bottom",
+        fontsize=FONT_TITLE, fontweight="bold",
+        transform=func_axes[mid].transAxes,
+        clip_on=False,
+    )
+    func_axes[mid].legend(
+        wedges, legend_labels,
+        loc="upper center",
+        bbox_to_anchor=(0, -1.48),
+        bbox_transform=func_axes[mid].transData,
+        ncol=3, frameon=False, fontsize=FONT_LABEL,
+    )
 
     plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=3.0)
     pos = ax_cash.get_position()
@@ -529,19 +618,32 @@ def main():
     fte_raw = get_values_row(df, fte_idx, FTE_YEAR_COLS, parse_money)
     fte_values = [0.0 if v is None else float(v) for v in fte_raw]
 
+    # Functional expenses
+    year_map = build_year_to_col_map(df, FUNC_YEAR_COLS_ALL)
+    if not year_map:
+        raise SystemExit("Could not map Functional Expense columns to years.")
+    func_year_cols = [year_map[y] for y in FUNC_YEARS]
+    program_vals, _ = get_metric_values_and_growth(df, FUNC_LABEL_COL, "Program",     func_year_cols)
+    mgmt_vals, _    = get_metric_values_and_growth(df, FUNC_LABEL_COL, "Management",  func_year_cols)
+    fund_vals, _    = get_metric_values_and_growth(df, FUNC_LABEL_COL, "Fundraising", func_year_cols)
+
     # ── Layout ────────────────────────────────────────────────────────────────
-    fig = plt.figure(figsize=(17.6, 13))
+    fig = plt.figure(figsize=(17.6, 15))
     gs = fig.add_gridspec(
-        nrows=3, ncols=4,
+        nrows=4, ncols=4,
         width_ratios=[1, 1, 1, 1],
-        height_ratios=[1.8, 1.2, 0.3],
+        height_ratios=[1.2, 1.2, 1.8, 0.3],
     )
 
-    ax_cash    = fig.add_subplot(gs[0, 0:2])
-    ax_unres   = fig.add_subplot(gs[0, 2:4])
+    ax_cash    = fig.add_subplot(gs[0, 0])       # 1 column — compact card
+    ax_unres   = fig.add_subplot(gs[0, 1:4])     # 3 columns
     ax_grouped = fig.add_subplot(gs[1, 0:3])
     ax_fte     = fig.add_subplot(gs[1, 3])
-    ax_footer  = fig.add_subplot(gs[2, :])
+
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[2, :], wspace=0.35)
+    func_axes = [fig.add_subplot(gs_func[0, i]) for i in range(3)]
+
+    ax_footer = fig.add_subplot(gs[3, :])
     ax_footer.axis("off")
 
     fig.suptitle("Financial Dashboard (FY 2022-2025)", fontsize=FONT_SUPT, y=0.995)
@@ -553,6 +655,24 @@ def main():
                      REV_YEARS, total_rev_values, total_exp_values)
     draw_fte_bar(ax_fte, "FTE Count", FTE_YEARS, fte_values,
                  _FTE, show_xlabel=True, show_ylabel=False)
+
+    wedges, legend_labels = draw_functional_pie(
+        func_axes, FUNC_YEARS, program_vals, mgmt_vals, fund_vals,
+    )
+    func_axes[1].text(
+        0.5, 1.58, "Functional Expenses",
+        ha="center", va="bottom",
+        fontsize=FONT_TITLE, fontweight="bold",
+        transform=func_axes[1].transAxes,
+        clip_on=False,
+    )
+    func_axes[1].legend(
+        wedges, legend_labels,
+        loc="upper center",
+        bbox_to_anchor=(0, -1.48),
+        bbox_transform=func_axes[1].transData,
+        ncol=3, frameon=False, fontsize=FONT_LABEL,
+    )
 
     plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=3.0)
     pos = ax_cash.get_position()
