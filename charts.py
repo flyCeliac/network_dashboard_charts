@@ -289,7 +289,7 @@ def draw_percent_bar(
     ax.text(
         1.02,
         target,
-        f"Target {target * 100:.0f}%",
+        f"Target\n{target * 100:.0f}%",
         ha="left",
         va="center",
         fontsize=FONT_ANNOT,
