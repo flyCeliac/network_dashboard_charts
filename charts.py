@@ -374,7 +374,7 @@ def draw_cash_card(ax, headline: str, value_text: str):
         transform=ax.transAxes, zorder=2)
     ax.text(cx + cw / 2, cy + ch * 0.46, value_text,
         ha="center", va="center",
-        fontsize=30, fontweight="bold", color="white",
+        fontsize=38, fontweight="bold", color="white",
         transform=ax.transAxes, zorder=2)
     ax.plot(
         [cx + cw * 0.20, cx + cw * 0.80], [cy + ch * 0.30, cy + ch * 0.30],
@@ -448,33 +448,37 @@ def generate_from_data(data: dict, out_path: str) -> None:
 
     year_range = f"FY {min(rev_years)}\u2013{max(rev_years)}"
 
-    # ── Layout ────────────────────────────────────────────────────────────────
-    # Row 0: Cash on Hand | Membership Dues | Donations | % Unrestricted Revenue
-    # Row 1: FTE Count | Conference Revenue & Expenses (3 cols)
-    # Row 2: Functional Expenses pies (full width)
-    # Row 3: footer
-    fig = plt.figure(figsize=(17.6, 15))
+    # ── Layout (6-col grid for flexible spanning) ─────────────────────────────
+    # Row 0: Cash(0:2) | Membership Dues(2:4) | Donations(4:6)
+    # Row 1: % Unrestricted(0:3) | FTE Count(3:6)
+    # Row 2: Conference Rev & Exp centered (1:5)
+    # Row 3: Functional Expenses pies (full width, nested)
+    # Row 4: footer
+    fig = plt.figure(figsize=(17.6, 14))
     gs = fig.add_gridspec(
-        nrows=4, ncols=4,
-        width_ratios=[1, 1, 1, 1],
-        height_ratios=[1.2, 1.2, 1.8, 0.3],
+        nrows=5, ncols=6,
+        height_ratios=[1.4, 1.1, 1.1, 1.8, 0.3],
     )
 
-    ax_cash  = fig.add_subplot(gs[0, 0])
-    ax_dues  = fig.add_subplot(gs[0, 1])
-    ax_don   = fig.add_subplot(gs[0, 2])
-    ax_unres = fig.add_subplot(gs[0, 3])
-    ax_fte   = fig.add_subplot(gs[1, 0])
-    ax_conf  = fig.add_subplot(gs[1, 1:4])
+    ax_cash  = fig.add_subplot(gs[0, 0:2])
+    ax_dues  = fig.add_subplot(gs[0, 2:4])
+    ax_don   = fig.add_subplot(gs[0, 4:6])
+    ax_unres = fig.add_subplot(gs[1, 0:3])
+    ax_fte   = fig.add_subplot(gs[1, 3:6])
+    ax_conf  = fig.add_subplot(gs[2, 1:5])   # 4 of 6 cols, centered
 
     n_func = len(func_years)
-    gs_func = GridSpecFromSubplotSpec(1, n_func, subplot_spec=gs[2, :], wspace=0.35)
+    gs_func = GridSpecFromSubplotSpec(1, n_func, subplot_spec=gs[3, :], wspace=0.15)
     func_axes = [fig.add_subplot(gs_func[0, i]) for i in range(n_func)]
 
-    ax_footer = fig.add_subplot(gs[3, :])
+    ax_footer = fig.add_subplot(gs[4, :])
     ax_footer.axis("off")
 
-    fig.suptitle(f"Financial Dashboard ({year_range})", fontsize=FONT_SUPT, y=0.995)
+    # Navy banner title
+    fig.add_artist(Rectangle((0, 0.955), 1, 0.045,
+        transform=fig.transFigure, facecolor=_NAV, edgecolor="none", zorder=0))
+    fig.suptitle(f"Financial Dashboard  ·  {year_range}",
+        fontsize=22, fontweight="bold", color="white", y=0.977)
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
     draw_bar(ax_dues, "Membership Dues",  rev_years, dues_values,      dues_growth,      nice_ymax(dues_values),      _REV, show_xlabel=True, show_ylabel=True)
@@ -499,7 +503,7 @@ def generate_from_data(data: dict, out_path: str) -> None:
         bbox_transform=func_axes[mid].transData,
         ncol=3, frameon=False, fontsize=FONT_LABEL)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=3.0)
+    plt.tight_layout(rect=[0, 0, 1, 0.955], h_pad=1.5, w_pad=1.0)
     pos = ax_cash.get_position()
     side = min(pos.width, pos.height)
     ax_cash.set_position([
@@ -542,27 +546,29 @@ def main():
     cash_headline = "Cash on Hand"
     cash_value    = "18 months"
 
-    fig = plt.figure(figsize=(17.6, 15))
+    fig = plt.figure(figsize=(17.6, 14))
     gs = fig.add_gridspec(
-        nrows=4, ncols=4,
-        width_ratios=[1, 1, 1, 1],
-        height_ratios=[1.2, 1.2, 1.8, 0.3],
+        nrows=5, ncols=6,
+        height_ratios=[1.4, 1.1, 1.1, 1.8, 0.3],
     )
 
-    ax_cash  = fig.add_subplot(gs[0, 0])
-    ax_dues  = fig.add_subplot(gs[0, 1])
-    ax_don   = fig.add_subplot(gs[0, 2])
-    ax_unres = fig.add_subplot(gs[0, 3])
-    ax_fte   = fig.add_subplot(gs[1, 0])
-    ax_conf  = fig.add_subplot(gs[1, 1:4])
+    ax_cash  = fig.add_subplot(gs[0, 0:2])
+    ax_dues  = fig.add_subplot(gs[0, 2:4])
+    ax_don   = fig.add_subplot(gs[0, 4:6])
+    ax_unres = fig.add_subplot(gs[1, 0:3])
+    ax_fte   = fig.add_subplot(gs[1, 3:6])
+    ax_conf  = fig.add_subplot(gs[2, 1:5])
 
-    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[2, :], wspace=0.35)
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, :], wspace=0.15)
     func_axes = [fig.add_subplot(gs_func[0, i]) for i in range(3)]
 
-    ax_footer = fig.add_subplot(gs[3, :])
+    ax_footer = fig.add_subplot(gs[4, :])
     ax_footer.axis("off")
 
-    fig.suptitle("Financial Dashboard (FY 2022-2025)", fontsize=FONT_SUPT, y=0.995)
+    fig.add_artist(Rectangle((0, 0.955), 1, 0.045,
+        transform=fig.transFigure, facecolor=_NAV, edgecolor="none", zorder=0))
+    fig.suptitle("Financial Dashboard  ·  FY 2022–2025",
+        fontsize=22, fontweight="bold", color="white", y=0.977)
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
     draw_bar(ax_dues, "Membership Dues",  REV_YEARS, dues_values,      dues_growth,      nice_ymax(dues_values),      _REV, show_xlabel=True, show_ylabel=True)
@@ -584,7 +590,7 @@ def main():
         bbox_transform=func_axes[1].transData,
         ncol=3, frameon=False, fontsize=FONT_LABEL)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.96], h_pad=3.0)
+    plt.tight_layout(rect=[0, 0, 1, 0.955], h_pad=1.5, w_pad=1.0)
     pos = ax_cash.get_position()
     side = min(pos.width, pos.height)
     ax_cash.set_position([
