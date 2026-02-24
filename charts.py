@@ -607,13 +607,16 @@ def generate_from_data(data: dict, out_path: str) -> None:
     ax_func_meta.axis("off")
     ax_func_meta.legend(
         wedges, legend_labels,
-        loc="center",
+        loc="upper center",
         ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
 
     plt.tight_layout(rect=[0, 0, 1, 0.945])
+    pos = ax_cash.get_position()
+    side = min(pos.width, pos.height)
+    ax_cash.set_position([pos.x0, pos.y0 + (pos.height - side) / 2, side, side])
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, format="pdf")
     plt.close(fig)
@@ -746,7 +749,7 @@ def main():
     ax_func_meta.axis("off")
     ax_func_meta.legend(
         wedges, legend_labels,
-        loc="center",
+        loc="upper center",
         ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
 
@@ -754,6 +757,9 @@ def main():
     draw_cash_card(ax_cash, "Cash on Hand", "18 months")
 
     plt.tight_layout(rect=[0, 0, 1, 0.945])
+    pos = ax_cash.get_position()
+    side = min(pos.width, pos.height)
+    ax_cash.set_position([pos.x0, pos.y0 + (pos.height - side) / 2, side, side])
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT_PATH, format="pdf")
