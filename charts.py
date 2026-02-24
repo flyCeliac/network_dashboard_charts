@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from matplotlib.patches import FancyBboxPatch, Rectangle
 from matplotlib.lines import Line2D
+from matplotlib.gridspec import GridSpecFromSubplotSpec
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict
 
@@ -353,37 +354,38 @@ def draw_fte_bar(
 
 
 def draw_functional_pie(
-    ax,
+    axes,
     years: List[int],
     program_vals: List[float],
     mgmt_vals: List[float],
     fund_vals: List[float],
 ):
-    latest_idx = len(years) - 1
-    latest_year = years[latest_idx]
-    sizes = [program_vals[latest_idx], mgmt_vals[latest_idx], fund_vals[latest_idx]]
+    wedges = []
+    for ax, year, prog, mgmt, fund in zip(axes, years, program_vals, mgmt_vals, fund_vals):
+        total = prog + mgmt + fund
+        sizes = [prog, mgmt, fund]
+        pct_prog = prog / total * 100 if total > 0 else 0
+        custom_labels = [
+            f"{_fmt_bar_val(prog)}\n{pct_prog:.1f}%",
+            _fmt_bar_val(mgmt),
+            _fmt_bar_val(fund),
+        ]
+        label_iter = iter(custom_labels)
+        wedges, _, autotexts = ax.pie(
+            sizes,
+            labels=None,
+            colors=FUNC_C,
+            autopct=lambda pct: next(label_iter),
+            startangle=90,
+            wedgeprops={"edgecolor": "white", "linewidth": 2},
+            pctdistance=0.65,
+        )
+        for at in autotexts:
+            at.set_fontsize(FONT_ANNOT - 1)
+            at.set_color("#333333")
+        ax.set_title(f"FY {year}", fontsize=FONT_TITLE)
 
-    wedges, _, autotexts = ax.pie(
-        sizes,
-        labels=None,
-        colors=FUNC_C,
-        autopct=lambda pct: f"{pct:.1f}%",
-        startangle=90,
-        wedgeprops={"edgecolor": "white", "linewidth": 2},
-        pctdistance=0.72,
-    )
-    for at in autotexts:
-        at.set_fontsize(FONT_ANNOT)
-        at.set_color("#333333")
-
-    ax.set_title(f"Functional Expenses (FY {latest_year})", fontsize=FONT_TITLE)
-
-    legend_labels = [
-        f"Program  {_fmt_bar_val(sizes[0])}",
-        f"Management  {_fmt_bar_val(sizes[1])}",
-        f"Fundraising  {_fmt_bar_val(sizes[2])}",
-    ]
-    return wedges, legend_labels
+    return wedges, ["Program", "Management", "Fundraising"]
 
 
 def draw_cash_card(ax, headline: str, value_text: str):
@@ -546,7 +548,10 @@ def generate_from_data(data: dict, out_path: str) -> None:
     ax_exp_20 = fig.add_subplot(gs[2, 2]); ax_exp_21 = fig.add_subplot(gs[2, 3])
 
     ax_cash      = fig.add_subplot(gs[3, 1])
-    ax_func      = fig.add_subplot(gs[3, 2:4])
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.05)
+    ax_func_0 = fig.add_subplot(gs_func[0, 0])
+    ax_func_1 = fig.add_subplot(gs_func[0, 1])
+    ax_func_2 = fig.add_subplot(gs_func[0, 2])
     ax_blank     = fig.add_subplot(gs[4, 0:2])
     ax_func_meta = fig.add_subplot(gs[4, 2:4])
     ax_blank.axis("off")
@@ -577,7 +582,7 @@ def generate_from_data(data: dict, out_path: str) -> None:
     draw_fte_bar(ax_exp_21, "FTE Count",      fte_years, fte_values,                                                      EXP_C[5], show_xlabel=True,  show_ylabel=False)
 
     wedges, legend_labels = draw_functional_pie(
-        ax_func, func_years, program_vals, mgmt_vals, fund_vals,
+        [ax_func_0, ax_func_1, ax_func_2], func_years, program_vals, mgmt_vals, fund_vals,
     )
 
     ax_func_meta.axis("off")
@@ -668,7 +673,10 @@ def main():
 
     # Row 3: % Unrestricted | Cash on Hand | Functional Expenses
     ax_cash      = fig.add_subplot(gs[3, 1])
-    ax_func      = fig.add_subplot(gs[3, 2:4])
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.05)
+    ax_func_0 = fig.add_subplot(gs_func[0, 0])
+    ax_func_1 = fig.add_subplot(gs_func[0, 1])
+    ax_func_2 = fig.add_subplot(gs_func[0, 2])
 
     # Row 4: legend strip (right side only)
     ax_blank     = fig.add_subplot(gs[4, 0:2])
@@ -713,7 +721,7 @@ def main():
 
     # ── Functional expenses ───────────────────────────────────────────────────
     wedges, legend_labels = draw_functional_pie(
-        ax_func, FUNC_YEARS, program_vals, mgmt_vals, fund_vals,
+        [ax_func_0, ax_func_1, ax_func_2], FUNC_YEARS, program_vals, mgmt_vals, fund_vals,
     )
 
     ax_func_meta.axis("off")
