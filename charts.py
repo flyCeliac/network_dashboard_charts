@@ -196,13 +196,18 @@ def _apply_ylabel(ax, label: str, show_ylabel: bool):
     ax.tick_params(axis="y", labelleft=True)
 
 
-def _fmt_bar_val(val: float, n_bars: int) -> str:
-    """Abbreviate dollar amounts when many bars are present to prevent overlap."""
-    if n_bars >= 5:
-        if val >= 1_000_000:
-            return f"${val / 1_000_000:.2f}M"
+def _fmt_bar_val(val: float, n_bars: int = 1) -> str:
+    """Format dollar value to 3 significant figures."""
+    if val >= 1_000_000:
+        return f"${val / 1_000_000:.2f}M"
+    elif val >= 100_000:
         return f"${val / 1_000:.0f}K"
-    return f"${val:,.0f}"
+    elif val >= 10_000:
+        return f"${val / 1_000:.1f}K"
+    elif val >= 1_000:
+        return f"${val / 1_000:.2f}K"
+    else:
+        return f"${val:.0f}"
 
 
 def draw_bar(
@@ -347,72 +352,38 @@ def draw_fte_bar(
             )
 
 
-def draw_functional_expenses(
+def draw_functional_pie(
     ax,
     years: List[int],
     program_vals: List[float],
     mgmt_vals: List[float],
     fund_vals: List[float],
-    program_pct_of_total: List[Optional[float]],
 ):
-    ax.set_title("Functional Expenses (FY 2022-2024)", fontsize=FONT_TITLE)
+    latest_idx = len(years) - 1
+    latest_year = years[latest_idx]
+    sizes = [program_vals[latest_idx], mgmt_vals[latest_idx], fund_vals[latest_idx]]
 
-    x = list(range(len(years)))
-    width = 0.26
+    wedges, _, autotexts = ax.pie(
+        sizes,
+        labels=None,
+        colors=FUNC_C,
+        autopct=lambda pct: f"{pct:.1f}%",
+        startangle=90,
+        wedgeprops={"edgecolor": "white", "linewidth": 2},
+        pctdistance=0.72,
+    )
+    for at in autotexts:
+        at.set_fontsize(FONT_ANNOT)
+        at.set_color("#333333")
 
-    bars_prog = ax.bar([i - width for i in x], program_vals, width=width, color=FUNC_C[0], label="Program")
-    bars_mgmt = ax.bar(x, mgmt_vals, width=width, color=FUNC_C[1], label="Management")
-    bars_fund = ax.bar([i + width for i in x], fund_vals, width=width, color=FUNC_C[2], label="Fundraising")
+    ax.set_title(f"Functional Expenses (FY {latest_year})", fontsize=FONT_TITLE)
 
-    ax.set_xticks(x, years)
-    ax.set_xlabel("Year", fontsize=FONT_LABEL)
-    ax.set_ylabel("Dollars", fontsize=FONT_LABEL)
-    ax.yaxis.set_major_formatter(FuncFormatter(money_fmt))
-    style_axis(ax)
-
-    ymax = max(program_vals + mgmt_vals + fund_vals) * 1.22 if (program_vals + mgmt_vals + fund_vals) else 1
-    ax.set_ylim(0, ymax if ymax > 0 else 1)
-
-    def label_bars(bars):
-        for bar in bars:
-            val = bar.get_height()
-            if val > 0:
-                ax.annotate(
-                    f"${val:,.0f}",
-                    xy=(bar.get_x() + bar.get_width() / 2, val),
-                    xytext=(0, 3),
-                    textcoords="offset points",
-                    ha="center",
-                    va="bottom",
-                    fontsize=FONT_ANNOT,
-                    clip_on=False,
-                )
-
-    label_bars(bars_prog)
-    label_bars(bars_mgmt)
-    label_bars(bars_fund)
-
-    for bar, pct in zip(bars_prog, program_pct_of_total):
-        if pct is None:
-            continue
-        val = bar.get_height()
-        if val <= 0:
-            continue
-        label = f"{pct * 100:.1f}%\nof total\nbudget"
-        ylim_top = ax.get_ylim()[1]
-        rel = val / ylim_top if ylim_top else 1
-        fontsize = FONT_ANNOT if rel >= 0.20 else FONT_ANNOT - 1
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            val * 0.80,
-            label,
-            ha="center",
-            va="center",
-            fontsize=fontsize,
-            color="white" if rel >= 0.25 else "black",
-        )
-
-    return bars_prog, bars_mgmt, bars_fund
+    legend_labels = [
+        f"Program  {_fmt_bar_val(sizes[0])}",
+        f"Management  {_fmt_bar_val(sizes[1])}",
+        f"Fundraising  {_fmt_bar_val(sizes[2])}",
+    ]
+    return wedges, legend_labels
 
 
 def draw_cash_card(ax, headline: str, value_text: str):
@@ -605,17 +576,15 @@ def generate_from_data(data: dict, out_path: str) -> None:
     draw_bar(ax_exp_20, "Total Expenses",     exp_years, total_exp_values, total_exp_growth, nice_ymax(total_exp_values), EXP_C[4], show_xlabel=True,  show_ylabel=True)
     draw_fte_bar(ax_exp_21, "FTE Count",      fte_years, fte_values,                                                      EXP_C[5], show_xlabel=True,  show_ylabel=False)
 
-    bars_prog, bars_mgmt, bars_fund = draw_functional_expenses(
-        ax_func, func_years, program_vals, mgmt_vals, fund_vals, program_pct_of_total,
+    wedges, legend_labels = draw_functional_pie(
+        ax_func, func_years, program_vals, mgmt_vals, fund_vals,
     )
-    ax_func.set_title(f"Functional Expenses ({func_range})", fontsize=FONT_TITLE)
 
     ax_func_meta.axis("off")
-    ax_func.legend(
-        [bars_prog[0], bars_mgmt[0], bars_fund[0]],
-        ["Program", "Management", "Fundraising"],
-        loc="upper center", bbox_to_anchor=(0.5, -0.18),
-        ncol=3, frameon=True, fontsize=FONT_LABEL,
+    ax_func_meta.legend(
+        wedges, legend_labels,
+        loc="center",
+        ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
@@ -743,24 +712,15 @@ def main():
     draw_fte_bar(ax_exp_21, "FTE Count",      FTE_YEARS, fte_values,                                                      EXP_C[5], show_xlabel=True,  show_ylabel=False)
 
     # ── Functional expenses ───────────────────────────────────────────────────
-    bars_prog, bars_mgmt, bars_fund = draw_functional_expenses(
-        ax_func,
-        FUNC_YEARS,
-        program_vals,
-        mgmt_vals,
-        fund_vals,
-        program_pct_of_total,
+    wedges, legend_labels = draw_functional_pie(
+        ax_func, FUNC_YEARS, program_vals, mgmt_vals, fund_vals,
     )
 
     ax_func_meta.axis("off")
-    ax_func.legend(
-        [bars_prog[0], bars_mgmt[0], bars_fund[0]],
-        ["Program", "Management", "Fundraising"],
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.18),
-        ncol=3,
-        frameon=True,
-        fontsize=FONT_LABEL,
+    ax_func_meta.legend(
+        wedges, legend_labels,
+        loc="center",
+        ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
 
     # ── Cash card ─────────────────────────────────────────────────────────────
