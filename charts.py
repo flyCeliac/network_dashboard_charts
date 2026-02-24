@@ -360,13 +360,15 @@ def draw_functional_pie(
     mgmt_vals: List[float],
     fund_vals: List[float],
 ):
+    # Text colors: white on dark/medium green, dark on light Fundraising slice
+    text_colors = ["white", "white", "#1a3c2a"]
     wedges = []
     for ax, year, prog, mgmt, fund in zip(axes, years, program_vals, mgmt_vals, fund_vals):
         total = prog + mgmt + fund
         sizes = [prog, mgmt, fund]
         pct_prog = prog / total * 100 if total > 0 else 0
         custom_labels = [
-            f"{_fmt_bar_val(prog)}\n{pct_prog:.1f}%",
+            f"{_fmt_bar_val(prog)}  {pct_prog:.0f}%",
             _fmt_bar_val(mgmt),
             _fmt_bar_val(fund),
         ]
@@ -377,12 +379,13 @@ def draw_functional_pie(
             colors=FUNC_C,
             autopct=lambda pct: next(label_iter),
             startangle=90,
-            wedgeprops={"edgecolor": "white", "linewidth": 2},
-            pctdistance=0.65,
+            wedgeprops={"linewidth": 0},
+            pctdistance=0.60,
         )
-        for at in autotexts:
-            at.set_fontsize(FONT_ANNOT - 1)
-            at.set_color("#333333")
+        for at, tc in zip(autotexts, text_colors):
+            at.set_fontsize(FONT_ANNOT)
+            at.set_color(tc)
+            at.set_fontweight("bold")
         ax.set_title(f"FY {year}", fontsize=FONT_TITLE)
 
     return wedges, ["Program", "Management", "Fundraising"]
