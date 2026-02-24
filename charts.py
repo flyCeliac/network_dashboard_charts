@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
@@ -360,32 +361,47 @@ def draw_functional_pie(
     mgmt_vals: List[float],
     fund_vals: List[float],
 ):
-    # Text colors: white on dark/medium green, dark on light Fundraising slice
-    text_colors = ["white", "white", "#1a3c2a"]
+    inside_colors = ["white", "white", "#1a3c2a"]
     wedges = []
     for ax, year, prog, mgmt, fund in zip(axes, years, program_vals, mgmt_vals, fund_vals):
         total = prog + mgmt + fund
         sizes = [prog, mgmt, fund]
-        pct_prog = prog / total * 100 if total > 0 else 0
-        custom_labels = [
-            f"{_fmt_bar_val(prog)}  {pct_prog:.0f}%",
-            _fmt_bar_val(mgmt),
-            _fmt_bar_val(fund),
-        ]
-        label_iter = iter(custom_labels)
-        wedges, _, autotexts = ax.pie(
+
+        wedges, _ = ax.pie(
             sizes,
             labels=None,
             colors=FUNC_C,
-            autopct=lambda pct: next(label_iter),
             startangle=90,
             wedgeprops={"linewidth": 0},
-            pctdistance=0.60,
         )
-        for at, tc in zip(autotexts, text_colors):
-            at.set_fontsize(FONT_ANNOT)
-            at.set_color(tc)
-            at.set_fontweight("bold")
+
+        for i, (wedge, val) in enumerate(zip(wedges, sizes)):
+            angle = math.radians((wedge.theta1 + wedge.theta2) / 2)
+            cx, cy = math.cos(angle), math.sin(angle)
+            pct = val / total if total > 0 else 0
+
+            label = f"{_fmt_bar_val(val)}  {pct * 100:.0f}%" if i == 0 else _fmt_bar_val(val)
+
+            if pct >= 0.10:
+                ax.text(
+                    cx * 0.62, cy * 0.62, label,
+                    ha="center", va="center",
+                    fontsize=FONT_ANNOT, fontweight="bold",
+                    color=inside_colors[i],
+                )
+            else:
+                ha = "left" if cx >= 0 else "right"
+                ax.annotate(
+                    label,
+                    xy=(cx * 1.02, cy * 1.02),
+                    xytext=(cx * 1.45, cy * 1.45),
+                    ha=ha, va="center",
+                    fontsize=FONT_ANNOT - 1,
+                    color="#444444",
+                    arrowprops=dict(arrowstyle="-", color="#aaaaaa", lw=0.8),
+                    clip_on=False,
+                )
+
         ax.set_title(f"FY {year}", fontsize=FONT_TITLE)
 
     return wedges, ["Program", "Management", "Fundraising"]
@@ -551,7 +567,7 @@ def generate_from_data(data: dict, out_path: str) -> None:
     ax_exp_20 = fig.add_subplot(gs[2, 2]); ax_exp_21 = fig.add_subplot(gs[2, 3])
 
     ax_cash      = fig.add_subplot(gs[3, 1])
-    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.05)
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.35)
     ax_func_0 = fig.add_subplot(gs_func[0, 0])
     ax_func_1 = fig.add_subplot(gs_func[0, 1])
     ax_func_2 = fig.add_subplot(gs_func[0, 2])
@@ -676,7 +692,7 @@ def main():
 
     # Row 3: % Unrestricted | Cash on Hand | Functional Expenses
     ax_cash      = fig.add_subplot(gs[3, 1])
-    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.05)
+    gs_func = GridSpecFromSubplotSpec(1, 3, subplot_spec=gs[3, 2:4], wspace=0.35)
     ax_func_0 = fig.add_subplot(gs_func[0, 0])
     ax_func_1 = fig.add_subplot(gs_func[0, 1])
     ax_func_2 = fig.add_subplot(gs_func[0, 2])
