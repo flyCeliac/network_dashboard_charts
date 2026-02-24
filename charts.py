@@ -284,13 +284,17 @@ def draw_percent_bar(
     ax.set_ylim(0, 0.15)
 
     ax.axhline(target, linestyle="--", linewidth=1)
+    import matplotlib.transforms as transforms
+    blended = transforms.blended_transform_factory(ax.transAxes, ax.transData)
     ax.text(
-        x[-1],
+        1.02,
         target,
         f"Target {target * 100:.0f}%",
-        ha="right",
-        va="bottom",
+        ha="left",
+        va="center",
         fontsize=FONT_ANNOT,
+        transform=blended,
+        clip_on=False,
     )
 
     for bar, val in zip(bars, values):
