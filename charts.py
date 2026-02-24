@@ -281,7 +281,7 @@ def draw_percent_bar(
     ax.yaxis.set_major_formatter(FuncFormatter(pct_fmt))
     style_axis(ax)
 
-    ax.set_ylim(0, 0.15)
+    ax.set_ylim(0, 0.08)
 
     ax.axhline(target, linestyle="--", linewidth=1)
     import matplotlib.transforms as transforms
