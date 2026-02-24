@@ -605,23 +605,24 @@ def generate_from_data(data: dict, out_path: str) -> None:
     )
 
     ax_func_meta.axis("off")
-    ax_func_meta.text(
-        0.5, 0.95, "Functional Expenses",
+    ax_func_1.text(
+        0, -1.12, "Functional Expenses",
         ha="center", va="top",
         fontsize=FONT_TITLE, fontweight="bold",
-        transform=ax_func_meta.transAxes,
+        transform=ax_func_1.transData,
+        clip_on=False,
     )
     ax_func_1.legend(
         wedges, legend_labels,
         loc="upper center",
-        bbox_to_anchor=(0, -1.2),
+        bbox_to_anchor=(0, -1.48),
         bbox_transform=ax_func_1.transData,
         ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
 
     draw_cash_card(ax_cash, cash_headline, cash_value)
 
-    plt.tight_layout(rect=[0, 0, 1, 0.945])
+    plt.tight_layout(rect=[0, 0, 1, 0.945], h_pad=2.5)
     pos = ax_cash.get_position()
     side = min(pos.width, pos.height)
     ax_cash.set_position([pos.x0, pos.y0 + (pos.height - side) / 2, side, side])
@@ -755,16 +756,17 @@ def main():
     )
 
     ax_func_meta.axis("off")
-    ax_func_meta.text(
-        0.5, 0.95, "Functional Expenses",
+    ax_func_1.text(
+        0, -1.12, "Functional Expenses",
         ha="center", va="top",
         fontsize=FONT_TITLE, fontweight="bold",
-        transform=ax_func_meta.transAxes,
+        transform=ax_func_1.transData,
+        clip_on=False,
     )
     ax_func_1.legend(
         wedges, legend_labels,
         loc="upper center",
-        bbox_to_anchor=(0, -1.2),
+        bbox_to_anchor=(0, -1.48),
         bbox_transform=ax_func_1.transData,
         ncol=3, frameon=False, fontsize=FONT_LABEL,
     )
@@ -772,7 +774,7 @@ def main():
     # ── Cash card ─────────────────────────────────────────────────────────────
     draw_cash_card(ax_cash, "Cash on Hand", "18 months")
 
-    plt.tight_layout(rect=[0, 0, 1, 0.945])
+    plt.tight_layout(rect=[0, 0, 1, 0.945], h_pad=2.5)
     pos = ax_cash.get_position()
     side = min(pos.width, pos.height)
     ax_cash.set_position([pos.x0, pos.y0 + (pos.height - side) / 2, side, side])
