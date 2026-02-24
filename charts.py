@@ -384,7 +384,7 @@ def draw_functional_pie(
 
             if pct >= 0.10:
                 ax.text(
-                    cx * 0.62, cy * 0.62, label,
+                    cx * 0.62 + 0.15, cy * 0.62, label,
                     ha="center", va="center",
                     fontsize=FONT_ANNOT, fontweight="bold",
                     color=inside_colors[i],
@@ -402,7 +402,7 @@ def draw_functional_pie(
                     clip_on=False,
                 )
 
-        ax.set_title(f"FY {year}", fontsize=FONT_TITLE)
+        ax.set_title(f"FY {year}", fontsize=FONT_TITLE, y=1.30)
 
     return wedges, ["Program", "Management", "Fundraising"]
 
@@ -554,7 +554,7 @@ def generate_from_data(data: dict, out_path: str) -> None:
     gs = fig.add_gridspec(
         nrows=5, ncols=4,
         width_ratios=[1, 1, 1, 1],
-        height_ratios=[1, 1, 1, 1.3, 0.35],
+        height_ratios=[1, 1, 1, 1.8, 0.35],
     )
 
     ax_rev_00 = fig.add_subplot(gs[0, 0]); ax_rev_01 = fig.add_subplot(gs[0, 1])
@@ -670,7 +670,7 @@ def main():
         nrows=5,
         ncols=4,
         width_ratios=[1, 1, 1, 1],
-        height_ratios=[1, 1, 1, 1.3, 0.35],
+        height_ratios=[1, 1, 1, 1.8, 0.35],
     )
 
     # Revenue axes (left half)
