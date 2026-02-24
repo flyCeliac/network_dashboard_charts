@@ -606,10 +606,10 @@ def generate_from_data(data: dict, out_path: str) -> None:
 
     ax_func_meta.axis("off")
     ax_func_1.text(
-        0, -1.12, "Functional Expenses",
-        ha="center", va="top",
+        0.5, 1.58, "Functional Expenses",
+        ha="center", va="bottom",
         fontsize=FONT_TITLE, fontweight="bold",
-        transform=ax_func_1.transData,
+        transform=ax_func_1.transAxes,
         clip_on=False,
     )
     ax_func_1.legend(
@@ -757,10 +757,10 @@ def main():
 
     ax_func_meta.axis("off")
     ax_func_1.text(
-        0, -1.12, "Functional Expenses",
-        ha="center", va="top",
+        0.5, 1.58, "Functional Expenses",
+        ha="center", va="bottom",
         fontsize=FONT_TITLE, fontweight="bold",
-        transform=ax_func_1.transData,
+        transform=ax_func_1.transAxes,
         clip_on=False,
     )
     ax_func_1.legend(
