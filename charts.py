@@ -544,15 +544,6 @@ def generate_from_data(data: dict, out_path: str) -> None:
 
     plt.tight_layout(rect=[0, 0.02, 1, 0.93], h_pad=2.0, w_pad=0.8)
 
-    # Square cash card — left-aligned in its column (no centering gap on left)
-    pos = ax_cash.get_position()
-    side = min(pos.width, pos.height)
-    ax_cash.set_position([
-        pos.x0,
-        pos.y0 + (pos.height - side) / 2,
-        side, side,
-    ])
-
     # Align left edges of rows 1 and 2 (% Unrestricted and Conference)
     pos_unres = ax_unres.get_position()
     pos_conf  = ax_conf.get_position()
@@ -663,14 +654,6 @@ def main():
     ], loc="center", ncol=3, frameon=False, fontsize=FONT_ANNOT)
 
     plt.tight_layout(rect=[0, 0.02, 1, 0.93], h_pad=2.0, w_pad=0.8)
-
-    pos = ax_cash.get_position()
-    side = min(pos.width, pos.height)
-    ax_cash.set_position([
-        pos.x0,
-        pos.y0 + (pos.height - side) / 2,
-        side, side,
-    ])
 
     # Align left edges of rows 1 and 2 (% Unrestricted and Conference)
     pos_unres = ax_unres.get_position()
