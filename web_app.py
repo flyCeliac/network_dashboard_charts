@@ -43,7 +43,6 @@ def load_data() -> dict:
 
 def save_data(data: dict) -> None:
     if _use_github():
-        # Fetch current SHA (required by GitHub API to update a file)
         r = requests.get(_github_url(), headers=_github_headers())
         r.raise_for_status()
         sha = r.json()["sha"]
@@ -70,13 +69,13 @@ def filter_data(data: dict, start_year: int, end_year: int) -> dict:
     for metric in d["revenue"]:
         d["revenue"][metric] = {y: v for y, v in d["revenue"][metric].items() if y in keep_rev}
 
-    keep_exp = {y for y in d["expenses"]["Programming"] if start_year <= int(y) <= end_year}
-    for metric in ["Programming", "Personnel", "Conference", "Grants to Agencies"]:
+    keep_exp = {y for y in d["expenses"]["Conference"] if start_year <= int(y) <= end_year}
+    for metric in ["Conference"]:
         d["expenses"][metric] = {y: v for y, v in d["expenses"][metric].items() if y in keep_exp}
     d["expenses"]["FTE Count"] = {y: v for y, v in d["expenses"]["FTE Count"].items() if y in keep_exp}
 
     keep_func = {y for y in d["functional"]["Program"] if start_year <= int(y) <= end_year}
-    for metric in ["Program", "Management", "Fundraising", "Total Budget"]:
+    for metric in ["Program", "Management", "Fundraising"]:
         d["functional"][metric] = {y: v for y, v in d["functional"][metric].items() if y in keep_func}
 
     return d
@@ -147,22 +146,7 @@ with rc1:
         min_value=0.0, value=existing_val(data, 'revenue', 'Donations', year),
         step=1000.0, format="%.2f")
 
-    supporters = st.number_input(
-        f"Strategic Supporters  ({fmt_dollars(prev(data, 'revenue', 'Strategic Supporters', year))})",
-        min_value=0.0, value=existing_val(data, 'revenue', 'Strategic Supporters', year),
-        step=1000.0, format="%.2f")
-
-    grants = st.number_input(
-        f"Grants Awarded  ({fmt_dollars(prev(data, 'revenue', 'Grants Awarded', year))})",
-        min_value=0.0, value=existing_val(data, 'revenue', 'Grants Awarded', year),
-        step=1000.0, format="%.2f")
-
 with rc2:
-    ffs = st.number_input(
-        f"Fee-for-Service  ({fmt_dollars(prev(data, 'revenue', 'Fee-for-Service', year))})",
-        min_value=0.0, value=existing_val(data, 'revenue', 'Fee-for-Service', year),
-        step=1000.0, format="%.2f")
-
     confrev = st.number_input(
         f"Conference Revenue  ({fmt_dollars(prev(data, 'revenue', 'Conference Revenue', year))})",
         min_value=0.0, value=existing_val(data, 'revenue', 'Conference Revenue', year),
@@ -186,34 +170,18 @@ st.caption(f"Prior year ({py}) shown in parentheses for reference.")
 ec1, ec2 = st.columns(2)
 
 with ec1:
-    prog_exp = st.number_input(
-        f"Programming  ({fmt_dollars(prev(data, 'expenses', 'Programming', year))})",
-        min_value=0.0, value=existing_val(data, 'expenses', 'Programming', year),
-        step=1000.0, format="%.2f")
-
-    personnel = st.number_input(
-        f"Personnel  ({fmt_dollars(prev(data, 'expenses', 'Personnel', year))})",
-        min_value=0.0, value=existing_val(data, 'expenses', 'Personnel', year),
-        step=1000.0, format="%.2f")
-
-with ec2:
     conf_exp = st.number_input(
         f"Conference  ({fmt_dollars(prev(data, 'expenses', 'Conference', year))})",
         min_value=0.0, value=existing_val(data, 'expenses', 'Conference', year),
         step=1000.0, format="%.2f")
 
-    gta = st.number_input(
-        f"Grants to Agencies  ({fmt_dollars(prev(data, 'expenses', 'Grants to Agencies', year))})",
-        min_value=0.0, value=existing_val(data, 'expenses', 'Grants to Agencies', year),
-        step=1000.0, format="%.2f")
-
-st.markdown("**FTE Count**")
-prior_fte = data["expenses"]["FTE Count"].get(str(py), 0) or 0
-fte_actual = st.number_input(
-    f"FTE  ({prior_fte:g} in {py})",
-    min_value=0.0, value=existing_val(data, 'expenses', 'FTE Count', year),
-    step=0.5, format="%.1f",
-    help="Full-time equivalent headcount for this fiscal year")
+with ec2:
+    prior_fte = data["expenses"]["FTE Count"].get(str(py), 0) or 0
+    fte_actual = st.number_input(
+        f"FTE Count  ({prior_fte:g} in {py})",
+        min_value=0.0, value=existing_val(data, 'expenses', 'FTE Count', year),
+        step=0.5, format="%.1f",
+        help="Full-time equivalent headcount for this fiscal year")
 
 
 # ── Functional Expenses ───────────────────────────────────────────────────────
@@ -252,12 +220,6 @@ with ff2:
         min_value=0.0, value=float(data['functional']['Fundraising'].get(fy, 0) or 0),
         step=1000.0, format="%.2f")
 
-    total_budget = st.number_input(
-        f"Total Budget  ({fmt_dollars(float(data['functional']['Total Budget'].get(str(func_prev_year), 0) or 0))}  in {func_prev_year})",
-        min_value=0.0, value=float(data['functional']['Total Budget'].get(fy, 0) or 0),
-        step=1000.0, format="%.2f",
-        help="Sum of all functional expense categories")
-
 
 # ── Cash on Hand ──────────────────────────────────────────────────────────────
 
@@ -283,26 +245,19 @@ start_year, end_year = st.slider(
 if st.button("Generate PDF", type="primary", use_container_width=True):
 
     # Update data dict with this year's values
-    data["revenue"]["Membership Dues"][y]       = dues
-    data["revenue"]["Donations"][y]             = donations
-    data["revenue"]["Strategic Supporters"][y]  = supporters
-    data["revenue"]["Grants Awarded"][y]        = grants
-    data["revenue"]["Fee-for-Service"][y]       = ffs
-    data["revenue"]["Conference Revenue"][y]    = confrev
-    data["revenue"]["pct_unrestricted"][y]      = unres
+    data["revenue"]["Membership Dues"][y]    = dues
+    data["revenue"]["Donations"][y]          = donations
+    data["revenue"]["Conference Revenue"][y] = confrev
+    data["revenue"]["pct_unrestricted"][y]   = unres
 
-    data["expenses"]["Programming"][y]          = prog_exp
-    data["expenses"]["Personnel"][y]            = personnel
-    data["expenses"]["Conference"][y]           = conf_exp
-    data["expenses"]["Grants to Agencies"][y]   = gta
-    data["expenses"]["FTE Count"][y]            = fte_actual
+    data["expenses"]["Conference"][y]        = conf_exp
+    data["expenses"]["FTE Count"][y]         = fte_actual
 
     # Only add functional data if any values were entered
-    if any(v > 0 for v in [prog_func, mgmt_func, fund_func, total_budget]):
-        data["functional"]["Program"][fy]       = prog_func
-        data["functional"]["Management"][fy]    = mgmt_func
-        data["functional"]["Fundraising"][fy]   = fund_func
-        data["functional"]["Total Budget"][fy]  = total_budget
+    if any(v > 0 for v in [prog_func, mgmt_func, fund_func]):
+        data["functional"]["Program"][fy]    = prog_func
+        data["functional"]["Management"][fy] = mgmt_func
+        data["functional"]["Fundraising"][fy] = fund_func
 
     data["cash_card"]["value"] = cash_value
 
@@ -314,10 +269,9 @@ if st.button("Generate PDF", type="primary", use_container_width=True):
             data["functional"]["Program"].get(fyrs, 0) or 0,
             data["functional"]["Management"].get(fyrs, 0) or 0,
             data["functional"]["Fundraising"].get(fyrs, 0) or 0,
-            data["functional"]["Total Budget"].get(fyrs, 0) or 0,
         ]
         if all(v == 0 for v in vals):
-            for metric in ("Program", "Management", "Fundraising", "Total Budget"):
+            for metric in ("Program", "Management", "Fundraising"):
                 data["functional"][metric].pop(fyrs, None)
 
     with st.spinner("Generating PDF…"):
