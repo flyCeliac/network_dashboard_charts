@@ -129,7 +129,13 @@ def nice_ymax(values: List[float], pad: float = 1.35) -> int:
 
 
 def money_fmt(v, _):
-    return f"${v:,.0f}"
+    if v >= 1_000_000:
+        s = v / 1_000_000
+        return f"${s:.0f}M" if s % 1 == 0 else f"${s:.1f}M"
+    elif v >= 1_000:
+        s = v / 1_000
+        return f"${s:.0f}K" if s % 1 == 0 else f"${s:.1f}K"
+    return f"${v:.0f}"
 
 
 def pct_fmt(v, _):
