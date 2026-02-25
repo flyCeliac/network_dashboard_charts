@@ -383,6 +383,7 @@ def draw_functional_pie(
 
 def draw_cash_card(ax, headline: str, value_text: str):
     ax.axis("off")
+    ax.patch.set_visible(False)  # hide white axes background so it can't paint over the navy box
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     cx, cy = 0.05, 0.05
@@ -393,7 +394,7 @@ def draw_cash_card(ax, headline: str, value_text: str):
         linewidth=0, facecolor=_NAV,
         transform=ax.transAxes, zorder=1,
     ))
-    ax.text(cx + cw / 2, cy + ch * 0.80, headline,
+    ax.text(cx + cw / 2, cy + ch * 0.74, headline,
         ha="center", va="center",
         fontsize=FONT_CARD_TITLE, fontweight="bold", color="white",
         transform=ax.transAxes, zorder=2)
@@ -402,11 +403,11 @@ def draw_cash_card(ax, headline: str, value_text: str):
         fontsize=20, fontweight="bold", color="white",
         transform=ax.transAxes, zorder=2)
     ax.plot(
-        [cx + cw * 0.20, cx + cw * 0.80], [cy + ch * 0.30, cy + ch * 0.30],
+        [cx + cw * 0.20, cx + cw * 0.80], [cy + ch * 0.32, cy + ch * 0.32],
         linewidth=0.8, color="white", alpha=0.25,
         transform=ax.transAxes, zorder=2,
     )
-    ax.text(cx + cw / 2, cy + ch * 0.16, "Months of\nOperating Reserve",
+    ax.text(cx + cw / 2, cy + ch * 0.20, "Operating Reserve",
         ha="center", va="center",
         fontsize=FONT_ANNOT - 1, color="white", alpha=0.65,
         transform=ax.transAxes, zorder=2)
