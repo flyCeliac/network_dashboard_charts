@@ -179,9 +179,11 @@ def draw_bar(
     n = len(years)
     bar_width = 0.40 if n >= 6 else 0.45 if n >= 5 else 0.55
     ann_fs = FONT_ANNOT - 2 if n >= 6 else FONT_ANNOT - 1 if n >= 5 else FONT_ANNOT
+    x_fs = FONT_ANNOT - 1 if n >= 6 else FONT_ANNOT if n >= 5 else FONT_LABEL
     x = list(range(n))
     bars = ax.bar(x, values, color=color, width=bar_width)
     ax.set_xticks(x, years)
+    ax.tick_params(axis="x", labelsize=x_fs)
     ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "Dollars", show_ylabel)
@@ -217,9 +219,12 @@ def draw_percent_bar(
     show_xlabel: bool,
     show_ylabel: bool,
 ):
-    x = list(range(len(years)))
+    n = len(years)
+    x_fs = FONT_ANNOT - 1 if n >= 6 else FONT_ANNOT if n >= 5 else FONT_LABEL
+    x = list(range(n))
     bars = ax.bar(x, values, color=color, width=0.70)
     ax.set_xticks(x, years)
+    ax.tick_params(axis="x", labelsize=x_fs)
     ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "Percent", show_ylabel)
@@ -255,8 +260,10 @@ def draw_fte_bar(
     x = list(range(n))
     bar_width = 0.50 if n >= 6 else 0.55 if n >= 5 else 0.65
     ann_fs = FONT_ANNOT - 1 if n >= 6 else FONT_ANNOT
+    x_fs = FONT_ANNOT - 1 if n >= 6 else FONT_ANNOT if n >= 5 else FONT_LABEL
     bars = ax.bar(x, values, color=color, width=bar_width)
     ax.set_xticks(x, years)
+    ax.tick_params(axis="x", labelsize=x_fs)
     ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year" if show_xlabel else "", fontsize=FONT_LABEL)
     _apply_ylabel(ax, "FTE", show_ylabel)
@@ -310,9 +317,11 @@ def draw_grouped_bar(
     ann_fs = FONT_ANNOT - 4 if n >= 6 else FONT_ANNOT - 3 if n >= 5 else FONT_ANNOT
     x_a = [xi - bar_width / 2 for xi in x]
     x_b = [xi + bar_width / 2 for xi in x]
+    x_fs = FONT_ANNOT - 1 if n >= 6 else FONT_ANNOT if n >= 5 else FONT_LABEL
     bars_a = ax.bar(x_a, values_a, width=bar_width, color=color_a, label=label_a)
     bars_b = ax.bar(x_b, values_b, width=bar_width, color=color_b, label=label_b)
     ax.set_xticks(x, years)
+    ax.tick_params(axis="x", labelsize=x_fs)
     ax.set_title(title, fontsize=FONT_TITLE, fontweight="bold")
     ax.set_xlabel("Year", fontsize=FONT_LABEL)
     ax.set_ylabel("Dollars", fontsize=FONT_LABEL)
